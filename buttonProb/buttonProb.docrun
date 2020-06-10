@@ -1,0 +1,18 @@
+#!/bin/bash
+
+. /etc/profile
+
+WORKDIR=`dirname $0`
+
+. ${WORKDIR}/../sane-button.conf
+
+docker run --rm --detach \
+        --volume ${SCANDIR}:${SCANDIR} \
+        --volume /etc/localtime:/etc/localtime:ro \
+	--volume ${WORKDIR}/1300i_0D12.nal:/usr/share/sane/epjitsu/1300i_0D12.nal \
+	--volume ${WORKDIR}/buttonProb.sh:/bin/buttonProb.sh \
+	--volume ${WORKDIR}/../sane-button.conf:/etc/sane-button.conf \
+	--volume ${TIF2PDF_SOCKET}:${TIF2PDF_SOCKET} \
+	--device /dev/bus/usb:/dev/bus/usb  \
+	--name button_prob \
+	alpine/button_prob /bin/buttonProb.sh

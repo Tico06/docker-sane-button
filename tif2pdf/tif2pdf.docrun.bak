@@ -1,0 +1,31 @@
+#!/bin/bash
+
+. /etc/profile
+
+PWD=`dirname $0`
+
+[ -z "$1" ] && \
+	echo "$0 TIMESTAMP"
+
+TIMESTAMP=$1
+
+. ${PWD}/../sane-button.conf
+
+echo "Starting $0 $1..."
+
+DOCKER="/usr/bin/docker"
+
+[[ $(${DOCKER} ps -f "name=tif2pdf_${TIMESTAMP}" --format '{{.Names}}') ==  tif2pdf_${TIMESTAMP} ]] && \
+	echo "tif2pdf_${TIMESTAMP} is already running !" && \
+	exit 1
+
+${DOCKER} run --detach --rm \
+        --volume ${PDFDIR}:${PDFDIR} \
+	--volume ${SCANDIR}:${SCANDIR} \
+        --volume /etc/localtime:/etc/localtime:ro \
+	--volume ${PWD}/tif2pdf.sh:/bin/tif2pdf.sh:ro \
+	--volume ${PWD}/../sane-button.conf:/etc/sane-button.conf:ro \
+	--volume ${TIF2PDF_SOCKET}:${TIF2PDF_SOCKET} \
+        --env TIMESTAMP="${TIMESTAMP}" \
+	--name tif2pdf_${TIMESTAMP} \
+	alpine/tif2pdf /bin/tif2pdf.sh

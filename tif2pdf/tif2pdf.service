@@ -1,0 +1,9 @@
+[Unit]
+Description=reads pipe
+Requires=tif2pdf.socket
+
+[Service]
+StandardInput=socket
+StandardOutput=journal
+StandardError=journal
+ExecStart=/bin/bash -c 'echo start; while read TIMESTAMP; do /root/sane-button/tif2pdf.docrun $TIMESTAMP; done; echo end'

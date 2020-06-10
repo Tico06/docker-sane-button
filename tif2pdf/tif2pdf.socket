@@ -1,0 +1,10 @@
+[Unit]
+Description=listen pipe
+
+[Socket]
+ListenFIFO=/tmp/tif2pdf.pipe
+RemoveOnStop=on
+
+[Install]
+WantedBy=tif2pdf.service
+

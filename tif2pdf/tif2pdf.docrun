@@ -1,0 +1,38 @@
+#!/bin/bash
+
+. /etc/profile
+
+WORKDIR=`dirname $0`
+
+[ -z "$1" ] && \
+	echo "$0 TIMESTAMP"
+
+TIMESTAMP=$1
+
+. ${WORKDIR}/../sane-button.conf
+
+echo "Starting $0 $1..."
+
+DOCKER="/usr/bin/docker"
+
+## Testing if a docker is already running for this TS tifs directory
+[[ $(${DOCKER} ps -f "name=tif2pdf_${TIMESTAMP}" --format '{{.Names}}') ==  tif2pdf_${TIMESTAMP} ]] && \
+	echo "tif2pdf_${TIMESTAMP} is already running !" && \
+	exit 1
+
+## If TIF2PDF_NB instances are already running, the call is delayed for TIF2PDF_DELAY minutes with at command
+[ $(${DOCKER} ps --filter "ancestor=alpine/tif2pdf" --filter "status=running" --format "{{.ID}}" |wc -l) -ge ${TIF2PDF_NB} ] && \
+	echo "echo \"${TIMESTAMP}\" >${TIF2PDF_SOCKET}" | at now + ${TIF2PDF_DELAY} minutes && \
+	echo "${TIMESTAMP} delayed for ${TIF2PDF_DELAY} minutes." && \
+	exit 0
+
+${DOCKER} run --detach --rm \
+        --volume ${PDFDIR}:${PDFDIR} \
+	--volume ${SCANDIR}:${SCANDIR} \
+        --volume /etc/localtime:/etc/localtime:ro \
+	--volume ${WORKDIR}/tif2pdf.sh:/bin/tif2pdf.sh:ro \
+	--volume ${WORKDIR}/../sane-button.conf:/etc/sane-button.conf:ro \
+	--volume ${TIF2PDF_SOCKET}:${TIF2PDF_SOCKET} \
+        --env TIMESTAMP="${TIMESTAMP}" \
+	--name tif2pdf_${TIMESTAMP} \
+	alpine/tif2pdf /bin/tif2pdf.sh
